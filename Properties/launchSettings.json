@@ -2,7 +2,12 @@
   "profiles": {
     "NotificationsAPI": {
       "commandName": "Project",
-      "applicationUrl": "http://localhost:5104"
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5104",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }
