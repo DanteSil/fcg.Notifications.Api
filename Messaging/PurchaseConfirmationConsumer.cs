@@ -34,6 +34,14 @@ public sealed class PurchaseConfirmationConsumer(
         await channel.BasicConsumeAsync(QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
         logger.LogInformation("Consumindo a fila {Queue}", QueueName);
 
+        await channel.ExchangeDeclareAsync("usuarios", ExchangeType.Direct, durable: true, cancellationToken: stoppingToken);
+        await channel.QueueDeclareAsync("usuarios.notificacoes", durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+        await channel.QueueBindAsync("usuarios.notificacoes", "usuarios", "usuario.criado", cancellationToken: stoppingToken);
+        var welcomeConsumer = new AsyncEventingBasicConsumer(channel);
+        welcomeConsumer.ReceivedAsync += (_, delivery) => HandleWelcomeAsync(channel, delivery);
+        await channel.BasicConsumeAsync("usuarios.notificacoes", autoAck: false, consumer: welcomeConsumer, cancellationToken: stoppingToken);
+        logger.LogInformation("Consumindo a fila usuarios.notificacoes");
+
         await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
     }
 
@@ -84,5 +92,30 @@ public sealed class PurchaseConfirmationConsumer(
         await channel.BasicAckAsync(delivery.DeliveryTag, multiple: false, cancellationToken: cancellationToken);
     }
 
+    private async Task HandleWelcomeAsync(IChannel channel, BasicDeliverEventArgs delivery)
+    {
+        UserCreatedEvent? user;
+        try
+        {
+            user = JsonSerializer.Deserialize<UserCreatedEvent>(delivery.Body.Span, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            user = null;
+        }
+
+        if (user is null || user.UserId == Guid.Empty || string.IsNullOrWhiteSpace(user.Email) || string.IsNullOrWhiteSpace(user.Name))
+        {
+            logger.LogWarning("Evento de cadastro inválido recebido em usuarios.notificacoes");
+            await channel.BasicRejectAsync(delivery.DeliveryTag, requeue: false, cancellationToken: delivery.CancellationToken);
+            return;
+        }
+
+        logger.LogInformation("E-mail de boas-vindas simulado para {Name} ({Email}), usuário {UserId}",
+            user.Name, user.Email, user.UserId);
+        await channel.BasicAckAsync(delivery.DeliveryTag, multiple: false, cancellationToken: delivery.CancellationToken);
+    }
+
+    private sealed record UserCreatedEvent(Guid UserId, string Email, string Name);
     private sealed record PaymentProcessedEvent(Guid OrderId, Guid UserId, Guid GameId, decimal Price, string Status);
 }

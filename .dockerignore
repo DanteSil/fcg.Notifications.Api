@@ -1,0 +1,11 @@
+.git
+.vs
+bin
+obj
+**/bin
+**/obj
+*.user
+*.pfx
+*.key
+appsettings.*.local.json
+secrets.json
