@@ -1,0 +1,83 @@
+{
+  "apiVersion": "apps/v1",
+  "metadata": {
+    "name": "notifications-api",
+    "namespace": "fcg"
+  },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "readinessProbe": {
+              "periodSeconds": 5,
+              "httpGet": {
+                "port": 8080,
+                "path": "/health"
+              },
+              "timeoutSeconds": 3
+            },
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ],
+            "resources": {
+              "limits": {
+                "memory": "512Mi",
+                "cpu": "500m"
+              },
+              "requests": {
+                "memory": "128Mi",
+                "cpu": "100m"
+              }
+            },
+            "livenessProbe": {
+              "periodSeconds": 15,
+              "httpGet": {
+                "port": 8080,
+                "path": "/health"
+              },
+              "failureThreshold": 3
+            },
+            "image": "fcg-notifications:local",
+            "startupProbe": {
+              "periodSeconds": 5,
+              "httpGet": {
+                "port": 8080,
+                "path": "/health"
+              },
+              "failureThreshold": 60
+            },
+            "imagePullPolicy": "Never",
+            "name": "notifications-api",
+            "envFrom": [
+              {
+                "configMapRef": {
+                  "name": "notifications-api-config"
+                }
+              },
+              {
+                "secretRef": {
+                  "name": "notifications-api-secrets"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "labels": {
+          "app": "notifications-api"
+        }
+      }
+    },
+    "selector": {
+      "matchLabels": {
+        "app": "notifications-api"
+      }
+    },
+    "replicas": 1
+  },
+  "kind": "Deployment"
+}

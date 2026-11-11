@@ -11,3 +11,7 @@ O perfil de desenvolvimento abre o Swagger em http://localhost:5104/swagger. As 
 Inicie a NotificationsAPI antes de fazer um novo pedido e aguarde o log `Consumindo a fila pagamentos.notificacoes`. Essa fila recebe os eventos da exchange `pagamentos` pela chave `pagamento.processado`, em paralelo com a fila do catálogo.
 
 Faça um pedido no catálogo para um jogo ainda fora da biblioteca. Para `Approved`, procure `E-mail de confirmação simulado` no console e compare o `orderId` com a resposta do catálogo. Para `Rejected`, o consumidor confirma a mensagem sem registrar um e-mail.
+
+## Kubernetes
+
+Os manifestos deste serviço ficam em k8s/. O script de implantação, a infraestrutura e as instruções para clonar os cinco repositórios estão em https://github.com/DanteSil/fcg.Infrastructure.
